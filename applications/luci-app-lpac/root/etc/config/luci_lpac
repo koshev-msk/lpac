@@ -1,0 +1,6 @@
+config preferences 'profiles'
+	option refresh_prompted '0'
+	option refresh_default '0'
+
+config setup 'backend'
+	option confirmed_apdu_backend 'pending'
