@@ -165,15 +165,21 @@ return view.extend({
 			this.refreshPreferenceDirty = true;
 	},
 
+	showBackendSection: function(backend) {
+		const section = document.getElementById('lpac-section-' + backend);
+
+		if (section)
+			section.style.display = '';
+	},
+
 	updateDetectionControls: function() {
 		const selected = selectedBackend(
 			document.getElementById('lpac-apdu-backend')?.value);
 
 		supportedBackends.forEach(function(backend) {
-
 			const section = document.getElementById('lpac-section-' + backend);
 			if (section) {
-				section.style.display = (selected === backend) ? 'block' : 'none';
+				section.style.display = selected ? (selected === backend ? '' : 'none') : '';
 			}
 
 			const button = document.getElementById('lpac-detect-' + backend);
@@ -297,14 +303,27 @@ return view.extend({
 			return;
 		}
 
-		if (!validDevicePath(atDevice) || !validDevicePath(uqmiDevice) ||
-		    !validDevicePath(mbimDevice)) {
+		if (!validDevicePath(atDevice)) {
+			this.showBackendSection('at');
+			ui.addNotification(null, E('p', {}, [ _('Device paths must be safe absolute paths below /dev without empty, . or .. components.') ]), 'error');
+			return;
+		}
+
+		if (!validDevicePath(uqmiDevice)) {
+			this.showBackendSection('uqmi');
 			ui.addNotification(null, E('p', {}, [ _('Device paths must be safe absolute paths below /dev without empty, . or .. components.') ]), 'error');
 			return;
 		}
 
 		if (!validUqmiDevice(uqmiDevice)) {
+			this.showBackendSection('uqmi');
 			ui.addNotification(null, E('p', {}, [ _('The uqmi device must be a /dev/cdc-wdmN or /dev/wwanNqmiN control device.') ]), 'error');
+			return;
+		}
+
+		if (!validDevicePath(mbimDevice)) {
+			this.showBackendSection('mbim');
+			ui.addNotification(null, E('p', {}, [ _('Device paths must be safe absolute paths below /dev without empty, . or .. components.') ]), 'error');
 			return;
 		}
 
@@ -523,7 +542,7 @@ return view.extend({
 						: lpac.errorMessage(driversResult)
 				])
 				: E([]),
-			E('div', { 'class': 'cbi-section', 'id': 'lpac-section-uqmi', 'style': 'display: ' + (activeBackend === 'uqmi' ? 'block' : 'none') }, [
+			E('div', { 'class': 'cbi-section', 'id': 'lpac-section-uqmi', 'style': 'display: ' + (activeBackend ? (activeBackend === 'uqmi' ? '' : 'none') : '') }, [
 				E('h3', {}, [ _('uqmi backend') ]),
 				formRow(_('Control device'),
 					textInput('lpac-uqmi-device', uqmi.device || '/dev/cdc-wdm0', '/dev/cdc-wdm0'),
@@ -541,7 +560,7 @@ return view.extend({
 				]), _('Detection reads device names and kernel driver bindings without opening the modem or sending QMI requests.')),
 				formRow(_('uqmi debug'), checkbox('lpac-uqmi-debug', uqmi.debug === '1'))
 			]),
-			E('div', { 'class': 'cbi-section', 'id': 'lpac-section-mbim', 'style': 'display: ' + (activeBackend === 'mbim' ? 'block' : 'none') }, [
+			E('div', { 'class': 'cbi-section', 'id': 'lpac-section-mbim', 'style': 'display: ' + (activeBackend ? (activeBackend === 'mbim' ? '' : 'none') : '') }, [
 				E('h3', {}, [ _('MBIM backend') ]),
 				formRow(_('Control device'), textInput('lpac-mbim-device', mbim.device || '/dev/cdc-wdm0', '/dev/cdc-wdm0')),
 				formRow(_('Port detection'), E('div', {}, [
@@ -560,7 +579,7 @@ return view.extend({
 					checkbox('lpac-mbim-skip-slot-mapping', mbim.skip_slot_mapping === '1'),
 					_('Use the modem\'s currently selected slot instead of querying or changing MBIM Device Slot Mapping. Enable only when the modem cannot use normal slot mapping.'))
 			]),
-			E('div', { 'class': 'cbi-section', 'id': 'lpac-section-at', 'style': 'display: ' + (activeBackend === 'at' ? 'block' : 'none') }, [
+			E('div', { 'class': 'cbi-section', 'id': 'lpac-section-at', 'style': 'display: ' + (activeBackend ? (activeBackend === 'at' ? '' : 'none') : '') }, [
 				E('h3', {}, [ _('AT backend') ]),
 				formRow(_('Serial device'),
 					textInput('lpac-at-device', at.device || '/dev/ttyUSB2', '/dev/ttyUSB2'),

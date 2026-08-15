@@ -817,6 +817,36 @@ assert.strictEqual(findAll(settingsPage, function(node) {
 		textContent(node).startsWith('The AT backend is timing-sensitive');
 }).length, 1, 'AT compatibility guidance should render as field help');
 
+assert.strictEqual(findById('lpac-section-mbim').style.display, '',
+	'the configured MBIM backend should initially use the stylesheet display state');
+assert.strictEqual(findById('lpac-section-uqmi').style.display, 'none',
+	'an inactive QMI backend should initially be hidden');
+assert.strictEqual(findById('lpac-section-at').style.display, 'none',
+	'an inactive AT backend should initially be hidden');
+
+backend.value = 'uqmi';
+backend.attrs.change();
+assert.strictEqual(findById('lpac-section-uqmi').style.display, '',
+	'switching to uqmi should reveal the QMI section');
+assert.strictEqual(findById('lpac-section-mbim').style.display, 'none',
+	'switching to uqmi should hide the MBIM section');
+assert.strictEqual(findById('lpac-section-at').style.display, 'none',
+	'switching to uqmi should keep the AT section hidden');
+
+backend.value = 'at';
+backend.attrs.change();
+assert.strictEqual(findById('lpac-section-at').style.display, '',
+	'switching to at should reveal the AT section');
+assert.strictEqual(findById('lpac-section-uqmi').style.display, 'none',
+	'switching to at should hide the QMI section');
+assert.strictEqual(findById('lpac-section-mbim').style.display, 'none',
+	'switching to at should keep the MBIM section hidden');
+
+backend.value = 'mbim';
+backend.attrs.change();
+assert.strictEqual(findById('lpac-section-mbim').style.display, '',
+	'switching back to mbim should reveal the MBIM section');
+
 const settingsSource = fs.readFileSync(path.join(appRoot,
 	'htdocs/luci-static/resources/view/lpac/settings.js'), 'utf8');
 assert.ok(!settingsSource.includes('setDefaultSmdp') &&
@@ -843,6 +873,8 @@ const unselectedBackend = document.getElementById('lpac-apdu-backend');
 assert.strictEqual(unselectedBackend.value, '',
 	'a missing APDU backend should render an explicit unselected state');
 [ 'at', 'uqmi', 'mbim' ].forEach(function(name) {
+	assert.strictEqual(document.getElementById('lpac-section-' + name).style.display, '',
+		`the ${name} section should remain visible while no APDU backend is selected`);
 	assert.strictEqual(document.getElementById('lpac-detect-' + name).disabled, true,
 		`the ${name} detection action must stay disabled without a selected backend`);
 });
@@ -859,6 +891,8 @@ assert.strictEqual(document.getElementById('lpac-detect-at').disabled, true,
 unselectedBackend.value = '';
 unselectedBackend.attrs.change();
 [ 'at', 'uqmi', 'mbim' ].forEach(function(name) {
+	assert.strictEqual(document.getElementById('lpac-section-' + name).style.display, '',
+		`clearing the backend must show the ${name} section again`);
 	assert.strictEqual(document.getElementById('lpac-detect-' + name).disabled, true,
 		`clearing the backend must disable the ${name} detection action again`);
 });
@@ -925,6 +959,8 @@ assert.strictEqual(notifications.length, invalidInactiveUqmiNotice + 1,
 assert.strictEqual(textContent(notifications.at(-1).content),
 	'The uqmi device must be a /dev/cdc-wdmN or /dev/wwanNqmiN control device.',
 	'the uqmi validation error should not imply that uqmi must be active');
+assert.strictEqual(findById('lpac-section-uqmi').style.display, '',
+	'an invalid inactive uqmi field should reveal the QMI section for correction');
 findById('lpac-uqmi-device').value = '/dev/cdc-wdm0';
 
 function refreshSettingsResults(preferenceResult) {
